@@ -320,6 +320,7 @@ namespace MiniMaxH3VAE {
     static ggml_tensor* apply_partial_rope(ggml_context* ctx,
                                            ggml_tensor* x,
                                            ggml_tensor* pe,
+                                           ggml_backend_t backend,
                                            const std::string& profile_prefix = "vae.attn.rope") {
         int64_t rot_dim = pe->ne[2] * 2;
         auto rot_src     = h3_profile_name(ggml_ext_slice(ctx, x, 0, 0, rot_dim),
@@ -327,7 +328,8 @@ namespace MiniMaxH3VAE {
         auto rotated    = Rope::apply_rope(ctx,
                                            rot_src,
                                            pe,
-                                           false);
+                                           false,
+                                           backend);
         h3_profile_name(rotated, profile_prefix + ".rotated");
         if (rot_dim == x->ne[0]) {
             return rotated;
@@ -415,9 +417,11 @@ namespace MiniMaxH3VAE {
             h3_profile_name(q, profile_prefix + ".q_norm");
             k                   = ggml_rms_norm(ctx->ggml_ctx, k, 1e-5f);
             h3_profile_name(k, profile_prefix + ".k_norm");
-            q                   = apply_partial_rope(ctx->ggml_ctx, q, pe, profile_prefix + ".q_rope_pack");
+            q                   = apply_partial_rope(ctx->ggml_ctx, q, pe, ctx->backend,
+                                                     profile_prefix + ".q_rope_pack");
             h3_profile_name(q, profile_prefix + ".q_rope");
-            k                   = apply_partial_rope(ctx->ggml_ctx, k, pe, profile_prefix + ".k_rope_pack");
+            k                   = apply_partial_rope(ctx->ggml_ctx, k, pe, ctx->backend,
+                                                     profile_prefix + ".k_rope_pack");
             h3_profile_name(k, profile_prefix + ".k_rope");
             auto out            = ggml_ext_attention_ext(ctx->ggml_ctx,
                                                          ctx->backend,
@@ -1222,13 +1226,16 @@ namespace MiniMaxH3VAE {
                 auto mean        = make_input(pixel_mean);
                 auto std         = make_input(pixel_std);
                 auto runner_ctx  = get_context();
+                const bool use_cann_conv3d = sd_backend_is(runner_ctx.backend, "CANN");
                 runner_ctx.conv3d_auto_direct_enabled =
-                    !decode_graph &&
-                    h3_env_flag_enabled_or_default("ED_MINIMAX_H3_VAE_ENCODER_CUDNN_CONV3D", true) &&
-                    should_use_cuda_auto_conv3d();
+                    use_cann_conv3d ||
+                    (!decode_graph &&
+                     h3_env_flag_enabled_or_default("ED_MINIMAX_H3_VAE_ENCODER_CUDNN_CONV3D", true) &&
+                     should_use_cuda_auto_conv3d());
                 runner_ctx.conv3d_force_direct_enabled =
-                    runner_ctx.conv3d_auto_direct_enabled &&
-                    h3_env_flag_enabled_or_default("ED_MINIMAX_H3_VAE_ENCODER_CUDNN_CONV3D_ALL", true);
+                    use_cann_conv3d ||
+                    (runner_ctx.conv3d_auto_direct_enabled &&
+                     h3_env_flag_enabled_or_default("ED_MINIMAX_H3_VAE_ENCODER_CUDNN_CONV3D_ALL", true));
                 ggml_tensor* out = nullptr;
                 if (decode_graph) {
                     auto pe = make_input(rope_cache);

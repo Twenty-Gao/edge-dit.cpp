@@ -2106,6 +2106,8 @@ bool ModelLoader::load_tensors(std::map<std::string, ggml_tensor*>& tensors,
             byte_offset = static_cast<size_t>(offset_elems) * static_cast<size_t>(fused->nb[concat_dim]);
         }
         view->data = static_cast<char*>(fused->data) + byte_offset;
+        view->view_src = fused;
+        view->view_offs = byte_offset;
 
         tensor_names_in_file.insert(base_name);
         *dst_tensor = view;

@@ -8070,18 +8070,20 @@ public:
     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
         ggml_tensor* w = weight_for_forward(ctx, false);
         ggml_tensor* b = bias_for_forward(ctx);
+        const bool cann_direct = sd_backend_is(ctx->backend, "CANN");
         const bool direct_compatible = ctx->conv3d_auto_direct_enabled &&
                                        x != nullptr &&
                                        w != nullptr &&
                                        x->type == GGML_TYPE_F32 &&
                                        w->type == GGML_TYPE_F16 &&
-                                       std::get<0>(kernel_size) == 3 &&
-                                       std::get<1>(kernel_size) == 3 &&
-                                       std::get<2>(kernel_size) == 3 &&
+                                       (cann_direct ||
+                                        (std::get<0>(kernel_size) == 3 &&
+                                         std::get<1>(kernel_size) == 3 &&
+                                         std::get<2>(kernel_size) == 3)) &&
                                        ggml_is_contiguous(x) &&
                                        ggml_is_contiguous(w);
         const bool use_direct = direct_compatible &&
-                                (ctx->conv3d_force_direct_enabled ||
+                                (cann_direct || ctx->conv3d_force_direct_enabled ||
                                  (in_channels >= 64 && x->ne[0] >= 128 && x->ne[1] >= 128));
         return ggml_ext_conv_3d(ctx->ggml_ctx, x, w, b, in_channels,
                                 std::get<2>(stride), std::get<1>(stride), std::get<0>(stride),

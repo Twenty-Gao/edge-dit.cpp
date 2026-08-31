@@ -734,12 +734,14 @@ struct AutoEncoderKL : public VAE {
         // ggml's direct conv avoids materializing it (~2.75x faster VAE decode here).
         // Encode has the same large-feature-map convs (kontext reference encoding was
         // 89% IM2COL / ~9.3s); enable direct there too. ED_VAE_ENCODE_DIRECT=0 reverts.
-        if (decode_graph) {
-            runner_ctx.conv2d_direct_enabled = true;
-        } else {
-            const char* enc_direct = std::getenv("ED_VAE_ENCODE_DIRECT");
-            if (!enc_direct || enc_direct[0] != '0') {
+        if (sd_backend_is(runner_ctx.backend, "CPU")) {
+            if (decode_graph) {
                 runner_ctx.conv2d_direct_enabled = true;
+            } else {
+                const char* enc_direct = std::getenv("ED_VAE_ENCODE_DIRECT");
+                if (!enc_direct || enc_direct[0] != '0') {
+                    runner_ctx.conv2d_direct_enabled = true;
+                }
             }
         }
 #endif

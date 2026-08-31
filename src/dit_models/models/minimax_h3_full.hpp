@@ -263,14 +263,16 @@ namespace MiniMaxH3 {
 
     static ggml_tensor* apply_partial_rope(ggml_context* ctx,
                                            ggml_tensor* x,
-                                           ggml_tensor* pe) {
+                                           ggml_tensor* pe,
+                                           ggml_backend_t backend) {
         int64_t rot_dim = pe->ne[2] * 2;
         GGML_ASSERT(rot_dim <= x->ne[0]);
         const bool use_slice_views = !h3_env_flag_enabled("ED_MINIMAX_H3_DISABLE_ROPE_SLICE_VIEW");
         auto rotated = Rope::apply_rope(ctx,
                                         ggml_ext_slice(ctx, x, 0, 0, rot_dim, !use_slice_views),
                                         pe,
-                                        false);
+                                        false,
+                                        backend);
         if (rot_dim == x->ne[0]) {
             return rotated;
         }
@@ -373,8 +375,8 @@ namespace MiniMaxH3 {
             q                = q_norm->forward(ctx, q);
             k                = k_norm->forward(ctx, k);
             if (pe != nullptr) {
-                q = apply_partial_rope(ctx->ggml_ctx, q, pe);
-                k = apply_partial_rope(ctx->ggml_ctx, k, pe);
+                q = apply_partial_rope(ctx->ggml_ctx, q, pe, ctx->backend);
+                k = apply_partial_rope(ctx->ggml_ctx, k, pe, ctx->backend);
             } else {
                 q = attention_layout(ctx->ggml_ctx, q);
                 k = attention_layout(ctx->ggml_ctx, k);
