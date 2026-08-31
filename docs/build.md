@@ -51,6 +51,8 @@ Common tools:
 Optional backend-specific tools:
 
 - CUDA Toolkit and `nvcc` for CUDA (CUDA 12.x or 13.x).
+- CANN Toolkit and an Ascend driver for the experimental CANN backend. CANN
+  9.0.1 on aarch64 Ascend 910C is the currently validated configuration.
 - NCCL, MPI, cuDNN, and cudnn-frontend for the official CUDA performance
   profile.
 - Apple build tools and frameworks for Metal on macOS.
@@ -69,6 +71,9 @@ CUDA_PATH
 NCCL_ROOT
 CUDNN_ROOT
 MPI_HOME
+CANN_INSTALL_DIR
+SOC_TYPE
+USE_ACL_GRAPH
 BUILD_DIR
 CLEAN
 ```
@@ -232,6 +237,62 @@ Output defaults to:
 ```text
 build-cuda/
 ```
+
+## Ascend CANN Build
+
+Initialize the submodules and build against the installed CANN Toolkit:
+
+```bash
+bash scripts/bootstrap.sh
+bash scripts/build_cann.sh
+```
+
+`bootstrap.sh` is only needed after the initial clone or when submodules change.
+For normal rebuilds, the complete command is simply:
+
+```bash
+bash scripts/build_cann.sh
+```
+
+The helper enables the CANN backend and CLI examples, while explicitly
+disabling CUDA, cuDNN, NCCL, MPI, the parallel runtime, and the other optional
+accelerator backends. The standard ggml CPU backend remains compiled as core
+infrastructure, but selecting `--backend cann` does not enable CPU offload.
+`USE_ACL_GRAPH` defaults to `OFF` for the validated correctness configuration.
+Use `CLEAN=1 bash scripts/build_cann.sh` when changing build options or when a
+clean reconfiguration is required.
+
+The helper discovers `/usr/local/Ascend/ascend-toolkit/latest` by default and
+uses `Ascend910C` as the default SoC. Override either value for another
+installation or Ascend generation:
+
+```bash
+CANN_INSTALL_DIR=/path/to/ascend-toolkit/latest \
+SOC_TYPE=Ascend910C \
+BUILD_DIR=build-cann \
+bash scripts/build_cann.sh
+```
+
+Output defaults to:
+
+```text
+build-cann/
+```
+
+Select an Ascend device with `--devices`; the CLI sets
+`ASCEND_RT_VISIBLE_DEVICES` before ggml initializes the CANN runtime:
+
+```bash
+./build-cann/bin/ed-cli \
+  --backend cann \
+  --devices 0 \
+  --model /path/to/model \
+  --prompt "a glass teapot on a wooden table" \
+  --output output.png
+```
+
+The CANN path is currently single-process and experimental. CUDA-specific
+cuDNN, CUDA Graph, NCCL, and custom CUDA kernels are not enabled by this build.
 
 ## Metal Build
 
