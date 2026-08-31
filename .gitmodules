@@ -1,7 +1,7 @@
 [submodule "third_party/ggml"]
 	path = third_party/ggml
-	url = https://github.com/THU-MIG/ggml.git
-	branch = edge-cudnn-sdpa
+	url = https://github.com/shoyofight/ggml.git
+	branch = feat/ascend-910c-ggml
 [submodule "third_party/onednn"]
 	path = third_party/onednn
 	url = https://github.com/uxlfoundation/oneDNN.git
