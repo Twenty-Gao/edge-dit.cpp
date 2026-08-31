@@ -6,8 +6,7 @@ This is the primary benchmark snapshot for edge-dit.cpp, measured on
 **RTX 4090 (24 GB)** with the CUDA `performance` build. It reports speed, VRAM,
 and image-quality metrics across three tasks (text-to-image, image editing,
 text-to-video) and three runtimes (edge-dit.cpp, Diffusers,
-stable-diffusion.cpp). The older, load-inclusive
-[performance (H200)](performance-H200.md) is kept for historical comparison.
+stable-diffusion.cpp). For the **H200** snapshot, see [performance (H200)](performance-H200.md).
 
 ## How to read these numbers
 
@@ -15,8 +14,7 @@ stable-diffusion.cpp). The older, load-inclusive
   only reliable cross-system metric.
 - **End-to-end excludes model load** (load-once boundary): weights are loaded
   once outside the timed region, generation is timed tightly, output encoding is
-  excluded. This differs from the H200 tables, whose end-to-end is
-  **load-inclusive** — the two are not directly comparable.
+  excluded.
 - **Same-precision rule (iron law):** cross-system numbers are only comparable at
   equal weight precision. The 8-bit group is edge `q8_0` / sd.cpp `q8_0` /
   Diffusers `w8` (Optimum-Quanto qint8). The 16-bit group is edge `f16`
@@ -341,7 +339,7 @@ contention). CUDA `performance` build (`build-cuda/bin/ed-sample`). 1024×1024
 (video 832×480, 41 frames); **model-default steps** (table below); batch 1;
 seed 0; one untimed warm-up per config on its first prompt; **mean over 3
 prompts**. Measurement boundary = **load-once**: end-to-end **excludes model load
-and output encoding** (not directly comparable to the load-inclusive H200 page).
+and output encoding**.
 
 ```bash
 python3 benchmark/run.py \
@@ -390,5 +388,5 @@ regenerating, run `scripts/eval_all.py` + `scripts/make_matrix_tables.py` +
 
 ## Related Documentation
 
-- [performance (H200)](performance-H200.md) — earlier load-inclusive H200 tables plus feature results (parallelism, computation reuse, VAE tiling, operator optimization).
+- [performance (H200)](performance-H200.md) — H200 tables plus feature results (parallelism, computation reuse, VAE tiling, operator optimization).
 - [Supported models](models.md), [CLI](cli.md), [Build and installation](build.md).

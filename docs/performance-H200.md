@@ -4,8 +4,7 @@
 
 This page is the **NVIDIA H200 benchmark snapshot**. All tables on this
 page were measured on H200 and their end-to-end / `Median` / `P90` latencies are
-**load-inclusive**. For the current **RTX 4090** snapshot (load-excluded
-end-to-end), see [performance (RTX 4090)](performance-4090.md).
+**load-exclusive**. For the current **RTX 4090** snapshot, see [performance (RTX 4090)](performance-4090.md).
 This page answers the feature questions behind the README claims:
 single-GPU runtime, parallel execution, computation reuse, Low-VRAM execution,
 quantization, VAE tiling, and CUDA operator optimization.
@@ -54,9 +53,7 @@ Contract: local NVIDIA H200 node, CUDA `performance` profile, 1024x1024,
 load-once generation. FLUX.1-dev and Qwen-Image use BF16; Stable Diffusion 3
 Medium uses the matched precision available to each runtime. Output encoding is
 outside `Median` and `P90`. Note: on this H200 page `Median`/`P90` are
-**load-inclusive end-to-end** latency; the RTX 4090 tables in
-[performance (RTX 4090)](performance-4090.md) report load-excluded numbers, so the
-two are not directly comparable.
+**load-exclusive end-to-end** latency.
 
 | Model | System | Load (s) | Median (s) | P90 (s) | Peak VRAM (MiB) |
 |---|---|---:|---:|---:|---:|

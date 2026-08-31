@@ -28,7 +28,7 @@ placement, and backend selection.
 - **Lightweight native DiT runtime**
   - Pure **C/C++** inference built on [ggml](https://github.com/ggml-org/ggml) — **no Python or PyTorch at runtime**
   - Explicit control over tensors, graph execution, memory, and device placement
-  - **Multi-backend**: **CUDA** (first-class), **CPU** (portable, optional oneDNN **bf16 AMX** matmul), **Vulkan** (cross-vendor GPU), **Metal** (experimental)
+  - **Multi-backend**: **CUDA** (first-class), **CPU** (portable, optional oneDNN **bf16 AMX** matmul), **Ascend CANN** (experimental), **Vulkan** (cross-vendor GPU), **Metal** (experimental)
   - Loads **Diffusers** directories, standalone components, **safetensors** (+ shard index), and **GGUF**
 
 - **Unified across tasks and model families**
@@ -113,6 +113,8 @@ offload tier (noted in Precision) and are compared within that tier. sd.cpp
 quantized tiers fold on-the-fly conversion into the timing and are inflated.
 Full 4090 configs, all quant tiers, VRAM and image-quality metrics are in
 [Performance and benchmarks (RTX 4090)](docs/performance-4090.md).
+The rows shown here use 20 denoising steps for FLUX.1-dev, SD3 Medium, and
+FLUX.1-Kontext; 30 steps for Qwen-Image and Wan2.1-T2V-1.3B.
 
 | Task | Model | System | Precision / tier | DiT sampling (ms) | E2E excl. load (ms) | Peak VRAM (MiB) |
 |---|---|---|---|---:|---:|---:|
@@ -140,9 +142,11 @@ per-runtime working points rather than a like-for-like speed ratio.
 ### H200 snapshot
 
 The table below was measured on 2026-07-13 with the CUDA `performance` profile
-on a local NVIDIA H200 node; its `Median`/`P90` are **load-inclusive end-to-end**
-latency (a different measurement boundary from the 4090 table above). Full H200
+on a local NVIDIA H200 node; its `Median`/`P90` are **load-exclusive end-to-end**
+latency. Full H200
 configs and notes are in [Performance and benchmarks](docs/performance-H200.md).
+FLUX.1-dev, Stable Diffusion 3 Medium, and Qwen-Image all use 50 denoising
+steps in this snapshot.
 
 | Model | System | Load (s) | Median (s) | P90 (s) | Peak VRAM (MiB) |
 |---|---|---:|---:|---:|---:|
@@ -162,7 +166,8 @@ Generation latency is the primary cross-runtime performance metric.
 
 MiniMax-H3 has a separate 124-frame H200 benchmark because it generates video
 and audio rather than one image. The table below keeps that result in the same
-Performance section, using the same resident-component BF16 setup.
+Performance section, using the same resident-component BF16 setup. Every FL2VA
+and Ref2VA row uses 20 denoising steps.
 
 | Workflow | Task | System | Generate | Peak VRAM (MiB) |
 |---|---|---|---:|---:|
