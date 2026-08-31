@@ -497,11 +497,11 @@ int main(int argc, char** argv) {
     // Distributed re-exec (mpirun) when a parallel size > 1 is requested.
     const int device_count = count_csv_values(args.devices);
     if (device_count > 0 && is_cpu_backend_name(args.backend)) {
-        std::fprintf(stderr, "--devices requires a GPU backend, but --backend cpu was requested\n");
+        std::fprintf(stderr, "--devices requires an accelerator backend, but --backend cpu was requested\n");
         return 1;
     }
     if (args.devices != nullptr && std::strlen(args.devices) > 0 && !is_distributed_process()) {
-        setenv("CUDA_VISIBLE_DEVICES", args.devices, 1);
+        set_visible_accelerator_devices(args.devices);
         if (args.backend == nullptr || std::strlen(args.backend) == 0) {
             args.backend = "gpu";
         }

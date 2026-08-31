@@ -42,6 +42,7 @@ set(CUDNN_ROOT "" CACHE PATH "Path to cuDNN installation")
 set(CUDNN_RUNTIME_LIBRARY_DIRS "" CACHE STRING "Extra runtime library directories needed by cuDNN, separated by semicolons")
 
 option(ED_GGML_CUDA   "Enable ggml CUDA backend" OFF)
+option(ED_GGML_CANN   "Enable ggml CANN backend" OFF)
 option(ED_GGML_METAL  "Enable ggml Metal backend" OFF)
 option(ED_GGML_VULKAN "Enable ggml Vulkan backend" OFF)
 option(ED_GGML_OPENCL "Enable ggml OpenCL backend" OFF)
@@ -166,6 +167,10 @@ set(GGML_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 if(ED_GGML_CUDA)
     set(GGML_CUDA ON CACHE BOOL "" FORCE)
+endif()
+
+if(ED_GGML_CANN)
+    set(GGML_CANN ON CACHE BOOL "" FORCE)
 endif()
 
 if(ED_GGML_METAL)
@@ -510,6 +515,7 @@ cuda_compiler=${CMAKE_CUDA_COMPILER_ID} ${CMAKE_CUDA_COMPILER_VERSION}
 cuda_architectures=${CMAKE_CUDA_ARCHITECTURES}
 ed_build_examples=${ED_BUILD_EXAMPLES}
 ed_ggml_cuda=${ED_GGML_CUDA}
+ed_ggml_cann=${ED_GGML_CANN}
 ed_enable_nccl=${ED_ENABLE_NCCL}
 ed_nccl_version=${ED_NCCL_VERSION}
 ed_enable_mpi=${ED_ENABLE_MPI}

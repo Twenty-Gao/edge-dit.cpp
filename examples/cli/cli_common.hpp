@@ -201,6 +201,14 @@ inline bool is_cpu_backend_name(const char* backend) {
     return lowercase(backend != nullptr ? backend : "") == "cpu";
 }
 
+inline void set_visible_accelerator_devices(const char* devices) {
+    if (devices == nullptr || devices[0] == '\0') {
+        return;
+    }
+    setenv("CUDA_VISIBLE_DEVICES", devices, 1);
+    setenv("ASCEND_RT_VISIBLE_DEVICES", devices, 1);
+}
+
 inline std::string normalized_video_format(const char* format) {
     std::string value = format != nullptr && format[0] != '\0' ? format : "auto";
     value = lowercase(value);
@@ -1206,8 +1214,11 @@ inline int launch_distributed_cli(int argc, char** argv, const FluxCliArgs& args
         if (rank > 0) {
             cmd += " :";
         }
+        const std::string quoted_device = shell_quote(devices[static_cast<size_t>(rank)].c_str());
         cmd += " -np 1 env ED_CLI_LAUNCHED=1 ED_CLI_SINGLE_VISIBLE_DEVICE=1 CUDA_VISIBLE_DEVICES=";
-        cmd += shell_quote(devices[static_cast<size_t>(rank)].c_str());
+        cmd += quoted_device;
+        cmd += " ASCEND_RT_VISIBLE_DEVICES=";
+        cmd += quoted_device;
         cmd += argv_cmd;
     }
 

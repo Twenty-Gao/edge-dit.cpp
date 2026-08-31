@@ -40,7 +40,7 @@ bool is_auto_backend(const std::string& name) {
 
 bool is_generic_gpu_request(const std::string& requested) {
     const std::string request = lowercase(requested);
-    return request == "gpu" || request == "cuda" || request == "vulkan" || request == "metal";
+    return request == "gpu" || request == "cuda" || request == "cann" || request == "vulkan" || request == "metal";
 }
 
 bool device_name_matches(ggml_backend_dev_t dev, const std::string& requested) {

@@ -29,7 +29,7 @@ void print_usage(const char* prog) {
         "  --t5xxl <path>            T5XXL text encoder weights\n"
         "  --llm <path>              MiniMax-H3/Qwen text encoder weights\n"
         "  --llm-vision <path>       Optional vision-language encoder weights\n"
-        "  --backend <name>          Backend: auto, cpu, cuda, vulkan, metal, gpu. Default: auto\n"
+        "  --backend <name>          Backend: auto, cpu, cuda, cann, vulkan, metal, gpu. Default: auto\n"
         "  --gpu                     Alias for --backend gpu\n"
         "  -t, --threads <int>       Thread count, default: auto\n"
         "  --type <dtype>            Load/on-the-fly quantization type\n"

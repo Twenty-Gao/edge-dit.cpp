@@ -154,9 +154,9 @@ static void print_usage(const char* prog) {
         "                            forwards) and write it to <path>\n"
         "  --cache-profile <path>    Load a MagCache ratio table / SenCache sensitivity profile\n"
         "                            from <path> (sencache requires this or --cache-calibrate)\n"
-        "  --backend <name>          Backend: auto, cpu, cuda, vulkan, metal, gpu. Default: auto\n"
+        "  --backend <name>          Backend: auto, cpu, cuda, cann, vulkan, metal, gpu. Default: auto\n"
         "  --gpu                     Alias for --backend gpu\n"
-        "  --devices <csv>           GPU devices for parallel workers, e.g. 0,1,2,3\n"
+        "  --devices <csv>           Accelerator devices, e.g. 0 or 0,1,2,3\n"
         "  --type <dtype>            Weight type / on-the-fly quantization when loading safetensors:\n"
         "                            preserve, f32, f16, bf16, q4_0, q4_1, q5_0, q5_1, q8_0,\n"
         "                            q2_k, q3_k, q4_k, q5_k, q6_k. Default: preserve\n"
@@ -861,11 +861,11 @@ int main(int argc, char** argv) {
 
     const int device_count = count_csv_values(args.devices);
     if (device_count > 0 && is_cpu_backend_name(args.backend)) {
-        std::fprintf(stderr, "--devices requires a GPU backend, but --backend cpu was requested\n");
+        std::fprintf(stderr, "--devices requires an accelerator backend, but --backend cpu was requested\n");
         return 1;
     }
     if (args.devices != nullptr && std::strlen(args.devices) > 0 && !is_distributed_process()) {
-        setenv("CUDA_VISIBLE_DEVICES", args.devices, 1);
+        set_visible_accelerator_devices(args.devices);
         if (args.backend == nullptr || std::strlen(args.backend) == 0) {
             args.backend = "gpu";
         }
