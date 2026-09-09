@@ -48,25 +48,36 @@ if not hasattr(_ModuleUtilsMixin, "get_head_mask"):
         return [None] * num_hidden_layers
     _ModuleUtilsMixin.get_head_mask = _get_head_mask
 
-# (3) med.py does `from transformers.pytorch_utils import (apply_chunking_to_forward,
-#     prune_linear_layer, find_pruneable_heads_and_indices)`. v5 dropped
-#     find_pruneable_heads_and_indices. Inject a vendored copy so the import
-#     resolves against a clean install.
+# (3) med.py imports apply_chunking_to_forward / find_pruneable_heads_and_indices /
+#     prune_linear_layer. Depending on the installed image-reward build this import is
+#     `from transformers.pytorch_utils import (...)` OR `from transformers.modeling_utils
+#     import (...)`. transformers>=5 dropped find_pruneable_heads_and_indices entirely and
+#     removed the other two from modeling_utils (they survive in pytorch_utils). Inject a
+#     vendored copy into BOTH namespaces so the import resolves either way.
 import transformers.pytorch_utils as _pytorch_utils
-if not hasattr(_pytorch_utils, "find_pruneable_heads_and_indices"):
-    import torch as _torch
+import transformers.modeling_utils as _modeling_utils
+import torch as _torch
 
-    def _find_pruneable_heads_and_indices(heads, n_heads, head_size, already_pruned_heads):
-        mask = _torch.ones(n_heads, head_size)
-        heads = set(heads) - already_pruned_heads
-        for head in heads:
-            head = head - sum(1 if h < head else 0 for h in already_pruned_heads)
-            mask[head] = 0
-        mask = mask.view(-1).contiguous().eq(1)
-        index = _torch.arange(len(mask))[mask].long()
-        return heads, index
 
-    _pytorch_utils.find_pruneable_heads_and_indices = _find_pruneable_heads_and_indices
+def _find_pruneable_heads_and_indices(heads, n_heads, head_size, already_pruned_heads):
+    mask = _torch.ones(n_heads, head_size)
+    heads = set(heads) - already_pruned_heads
+    for head in heads:
+        head = head - sum(1 if h < head else 0 for h in already_pruned_heads)
+        mask[head] = 0
+    mask = mask.view(-1).contiguous().eq(1)
+    index = _torch.arange(len(mask))[mask].long()
+    return heads, index
+
+
+for _ns in (_pytorch_utils, _modeling_utils):
+    if not hasattr(_ns, "find_pruneable_heads_and_indices"):
+        _ns.find_pruneable_heads_and_indices = _find_pruneable_heads_and_indices
+    # Re-export the two that survive in pytorch_utils into modeling_utils (where the
+    # installed med.py now imports them from).
+    for _sym in ("apply_chunking_to_forward", "prune_linear_layer"):
+        if not hasattr(_ns, _sym) and hasattr(_pytorch_utils, _sym):
+            setattr(_ns, _sym, getattr(_pytorch_utils, _sym))
 
 # (4) blip.py init_tokenizer reads tokenizer.additional_special_tokens_ids[0];
 #     both `additional_special_tokens` and `additional_special_tokens_ids` were
@@ -91,6 +102,29 @@ try:
         _TokBase.additional_special_tokens_ids = property(_extra_special_token_ids)
 except Exception:
     pass
+
+# (5) BLIP init_tokenizer() calls BertTokenizer.from_pretrained('bert-base-uncased').
+#     transformers>=5 dropped the legacy short-name -> google-bert/bert-base-uncased
+#     mapping, so in offline mode it silently builds a tokenizer containing ONLY the
+#     5 special tokens (vocab_size=5) and every prompt word tokenizes to [UNK]. That
+#     collapses the BLIP text features and sends ImageReward to ~-2.3 on good images
+#     instead of ~+1.5. Rewrite the short name to the canonical repo id first.
+from transformers import BertTokenizer as _BertTokenizer
+
+_bert_orig_from_pretrained = _BertTokenizer.from_pretrained
+
+
+@classmethod
+def _bert_from_pretrained(cls, pretrained_model_name_or_path, *args, **kwargs):
+    if (
+        isinstance(pretrained_model_name_or_path, str)
+        and pretrained_model_name_or_path == "bert-base-uncased"
+    ):
+        pretrained_model_name_or_path = "google-bert/bert-base-uncased"
+    return _bert_orig_from_pretrained(pretrained_model_name_or_path, *args, **kwargs)
+
+
+_BertTokenizer.from_pretrained = _bert_from_pretrained
 
 import ImageReward
 from tqdm.auto import tqdm
