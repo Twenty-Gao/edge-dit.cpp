@@ -54,6 +54,7 @@ outputs/
 *.png
 *.jpg
 *.jpeg
+*.gif
 *.mp4
 !docs/assets/*.mp4
 !docs/assets/*.png
@@ -67,3 +68,20 @@ outputs/
 
 # imatrix calibration outputs (large, not for git)
 imatrix-out/
+
+# local-only personal benchmark files (not for commit)
+/benchmark/jobs/flux-dev-quant-offload.yaml
+/benchmark/jobs/edit-3090.yaml
+/benchmark/jobs/t2i-3090.yaml
+/benchmark/jobs/video-3090.yaml
+/benchmark/reports/flux-dev-quant-offload/
+/benchmark/reports/3090/
+/benchmark/scripts/plot_vram.py
+/benchmark/sites/site-ningchang.yaml
+/benchmark/sites/site-3090.yaml
+/docs/performance-3090.md
+
+# ad-hoc seed-consistency verification scripts (not for commit)
+/diffusers_seed1234.py
+/diffusers_edit_seed1234.py
+/diffusers_video_seed1234.py

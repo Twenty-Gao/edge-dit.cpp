@@ -9,13 +9,13 @@
 #include <thread>
 #include <utility>
 
+#include "utils/rng_cuda.hpp"
 #include "utils/rng_philox.hpp"
 #include "utils/util.h"
 #include "runtime/model_loader.h"
 #if defined(GGML_USE_CUDA)
 #include "ggml-cuda.h"
 #endif
-
 namespace edgedit {
 namespace {
 
@@ -264,6 +264,12 @@ bool ModelRuntime::init_rng(const ed_context_params_t& params, std::string* erro
     (void)error;
     rng_ = std::make_shared<PhiloxRNG>();
     sampler_rng_ = rng_;
+#if defined(GGML_USE_CUDA)
+    // Match torch's CUDA randn grid-stride launch shape so the initial latent
+    // noise matches diffusers (torch.Generator(device="cuda")).
+    configure_rng_for_cuda_randn(
+        *rng_, runtime_gpu_device_ordinal(parallel_enabled() ? parallel_context_->local_rank() : 0));
+#endif
     return true;
 }
 

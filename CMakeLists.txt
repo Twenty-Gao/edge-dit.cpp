@@ -407,6 +407,9 @@ if(ED_GGML_CUDA)
     target_compile_definitions(edgedit PRIVATE ED_ENABLE_ASYNC_OFFLOAD)
     target_include_directories(edgedit PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/core/backend/ggml/cuda)
+    # CUDA runtime API (cudaGetDeviceProperties) for matching torch's randn
+    # grid-stride launch shape on the active device.
+    target_link_libraries(edgedit PRIVATE CUDA::cudart)
 endif()
 
 if(ED_ENABLE_PARALLEL)

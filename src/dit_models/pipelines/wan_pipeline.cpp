@@ -25,6 +25,7 @@
 #include "dit_models/pipelines/dit_pipeline_utils.hpp"
 #include "parallel/cfg_parallel.hpp"
 #include "utils/rng.hpp"
+#include "utils/rng_cuda.hpp"
 #include "utils/rng_philox.hpp"
 #include "utils/util.h"
 
@@ -394,6 +395,15 @@ bool WanPipeline::init_sampling_runtime(std::string* error) {
     denoiser_ = std::make_shared<DiscreteFlowDenoiser>();
     rng_ = std::make_shared<PhiloxRNG>();
     sampler_rng_ = rng_;
+#if defined(GGML_USE_CUDA)
+    // Match torch's CUDA randn grid-stride launch shape so the initial latent
+    // noise matches diffusers (torch.Generator(device="cuda")).
+    int device = 0;
+    if (runtime_ != nullptr && runtime_->parallel_context() != nullptr) {
+        device = runtime_->parallel_context()->device();
+    }
+    configure_rng_for_cuda_randn(*rng_, device);
+#endif
     set_flow_shift(std::numeric_limits<float>::infinity());
     return true;
 }

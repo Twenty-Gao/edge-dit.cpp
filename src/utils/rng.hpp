@@ -8,6 +8,11 @@ class RNG {
 public:
     virtual void manual_seed(uint64_t seed)      = 0;
     virtual std::vector<float> randn(uint32_t n) = 0;
+
+    // Optional: configure the GPU launch shape torch uses for CUDA randn so the
+    // generated noise matches torch.Generator(device="cuda"). No-op for RNGs that
+    // don't need it (e.g. STDDefaultRNG, MT19937RNG).
+    virtual void set_device_properties(uint32_t /*sm_count*/, uint32_t /*max_threads_per_sm*/) {}
 };
 
 class STDDefaultRNG : public RNG {
